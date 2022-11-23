@@ -10,8 +10,9 @@
             _action = action ?? throw new ArgumentNullException(nameof(action));
         }
 
-        public override Task Execute()
+        public override Task Execute(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             _action.Invoke();
             return Task.CompletedTask;
         }

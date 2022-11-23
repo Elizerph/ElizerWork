@@ -12,8 +12,9 @@ namespace ElizerWork
             _task = task ?? throw new ArgumentNullException(nameof(task));
         }
 
-        public override Task Execute()
+        public override Task Execute(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             return _task();
         }
     }

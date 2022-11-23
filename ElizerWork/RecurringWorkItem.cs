@@ -14,9 +14,10 @@
             _period = period;
         }
 
-        public override async Task Execute()
+        public override async Task Execute(CancellationToken cancellationToken)
         {
-            await _item.Execute();
+            cancellationToken.ThrowIfCancellationRequested();
+            await _item.Execute(cancellationToken);
             var nextTime = ExecutionTime + _period;
             var newWorkItem = new RecurringWorkItem(nextTime, _worker, _item, _period);
             _worker.Queue(newWorkItem);

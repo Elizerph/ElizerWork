@@ -9,6 +9,6 @@
             ExecutionTime = executionTime;
         }
 
-        public abstract Task Execute();
+        public abstract Task Execute(CancellationToken cancellationToken);
     }
 }

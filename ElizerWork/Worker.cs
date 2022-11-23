@@ -26,7 +26,7 @@
                 lock (_syncRoot)
                     foreach (var item in activeWorkItems)
                         _workItems.Remove(item);
-                await Task.WhenAll(activeWorkItems.Select(e => e.Execute()));
+                await Task.WhenAll(activeWorkItems.Select(e => e.Execute(cancellationToken)));
                 await Task.Delay(_beatPeriod, cancellationToken);
             }
         }
