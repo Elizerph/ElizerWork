@@ -14,10 +14,9 @@ namespace ElizerWork
 
         public override async Task Execute(CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-                return;
-
+            cancellationToken.ThrowIfCancellationRequested();
             await _task();
+            cancellationToken.ThrowIfCancellationRequested();
         }
     }
 }

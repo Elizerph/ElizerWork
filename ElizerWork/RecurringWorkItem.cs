@@ -16,10 +16,9 @@
 
         public override async Task Execute(CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested) 
-                return;
             await _item.Execute(cancellationToken);
-            var nextTime = StartTime + _period;
+            var nextTimeTicks = ((StartTime.Ticks / _period.Ticks) + 1) * _period.Ticks;
+            var nextTime = new DateTime(nextTimeTicks);
             var newWorkItem = new RecurringWorkItem(nextTime, _worker, _item, _period);
             _worker.Queue(newWorkItem);
         }

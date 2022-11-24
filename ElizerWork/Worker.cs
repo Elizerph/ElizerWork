@@ -19,18 +19,23 @@
 
         public async Task Run(CancellationToken cancellationToken)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            try
             {
-                var now = DateTime.Now;
-                var activeWorkItems = _workItems.Where(e => e.StartTime <= now).ToArray();
-                lock (_syncRoot)
-                    foreach (var item in activeWorkItems)
-                        _workItems.Remove(item);
-                if (activeWorkItems.Any())
-                    await Task.WhenAll(activeWorkItems.Select(e => e.Execute(cancellationToken)));
-                await Task.Delay(_beatPeriod, CancellationToken.None);
+                while (true)
+                {
+                    var now = DateTime.Now;
+                    var activeWorkItems = _workItems.Where(e => e.StartTime <= now).ToArray();
+                    lock (_syncRoot)
+                        foreach (var item in activeWorkItems)
+                            _workItems.Remove(item);
+                    if (activeWorkItems.Any())
+                        await Task.WhenAll(activeWorkItems.Select(e => e.Execute(cancellationToken)));
+                    await Task.Delay(_beatPeriod, cancellationToken);
+                }
             }
-            _workItems.Clear();
+            catch (OperationCanceledException)
+            {
+            }
         }
     }
 }

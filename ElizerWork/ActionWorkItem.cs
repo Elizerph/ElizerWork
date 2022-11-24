@@ -12,8 +12,9 @@
 
         public override Task Execute(CancellationToken cancellationToken)
         {
-            if (!cancellationToken.IsCancellationRequested)
-                _action.Invoke();
+            cancellationToken.ThrowIfCancellationRequested();
+            _action.Invoke();
+            cancellationToken.ThrowIfCancellationRequested();
             return Task.CompletedTask;
         }
     }

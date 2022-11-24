@@ -1,4 +1,6 @@
-﻿namespace ElizerWork
+﻿using System.Runtime.CompilerServices;
+
+namespace ElizerWork
 {
     public static class WorkerExtension
     {
@@ -26,6 +28,11 @@
             var workItem = new TaskWorkItem(startTime, task);
             var recurringWorkItem = new RecurringWorkItem(startTime, worker, workItem, period);
             worker.Queue(recurringWorkItem);
+        }
+
+        public static WorkerManager GetManager(this Worker worker)
+        {
+            return new WorkerManager(worker);
         }
     }
 }
