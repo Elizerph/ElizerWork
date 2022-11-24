@@ -2,11 +2,11 @@
 {
     public abstract class WorkItem
     {
-        public DateTime ExecutionTime { get; }
+        public DateTime StartTime { get; }
 
-        public WorkItem(DateTime executionTime)
+        public WorkItem(DateTime startTime)
         {
-            ExecutionTime = executionTime;
+            StartTime = startTime;
         }
 
         public abstract Task Execute(CancellationToken cancellationToken);

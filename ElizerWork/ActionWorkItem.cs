@@ -4,16 +4,16 @@
     {
         private readonly Action _action;
 
-        public ActionWorkItem(DateTime executionTime, Action action)
-            : base(executionTime)
+        public ActionWorkItem(DateTime startTime, Action action)
+            : base(startTime)
         {
             _action = action ?? throw new ArgumentNullException(nameof(action));
         }
 
         public override Task Execute(CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            _action.Invoke();
+            if (!cancellationToken.IsCancellationRequested)
+                _action.Invoke();
             return Task.CompletedTask;
         }
     }

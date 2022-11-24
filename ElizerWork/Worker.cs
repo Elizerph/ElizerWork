@@ -2,9 +2,9 @@
 {
     public class Worker
     {
+        private readonly object _syncRoot = new();
         private readonly TimeSpan _beatPeriod;
         private readonly List<WorkItem> _workItems = new();
-        private readonly object _syncRoot = new();
 
         public Worker(TimeSpan beatPeriod)
         {
@@ -22,13 +22,15 @@
             while (!cancellationToken.IsCancellationRequested)
             {
                 var now = DateTime.Now;
-                var activeWorkItems = _workItems.Where(e => e.ExecutionTime <= now).ToArray();
+                var activeWorkItems = _workItems.Where(e => e.StartTime <= now).ToArray();
                 lock (_syncRoot)
                     foreach (var item in activeWorkItems)
                         _workItems.Remove(item);
-                await Task.WhenAll(activeWorkItems.Select(e => e.Execute(cancellationToken)));
-                await Task.Delay(_beatPeriod, cancellationToken);
+                if (activeWorkItems.Any())
+                    await Task.WhenAll(activeWorkItems.Select(e => e.Execute(cancellationToken)));
+                await Task.Delay(_beatPeriod, CancellationToken.None);
             }
+            _workItems.Clear();
         }
     }
 }

@@ -6,8 +6,8 @@
         private readonly WorkItem _item;
         private readonly TimeSpan _period;
 
-        public RecurringWorkItem(DateTime executionTime, Worker worker, WorkItem workItem, TimeSpan period)
-            : base(executionTime)
+        public RecurringWorkItem(DateTime startTime, Worker worker, WorkItem workItem, TimeSpan period)
+            : base(startTime)
         {
             _worker = worker ?? throw new ArgumentNullException(nameof(worker));
             _item = workItem ?? throw new ArgumentNullException(nameof(workItem));
@@ -16,9 +16,10 @@
 
         public override async Task Execute(CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested) 
+                return;
             await _item.Execute(cancellationToken);
-            var nextTime = ExecutionTime + _period;
+            var nextTime = StartTime + _period;
             var newWorkItem = new RecurringWorkItem(nextTime, _worker, _item, _period);
             _worker.Queue(newWorkItem);
         }

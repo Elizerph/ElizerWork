@@ -6,16 +6,18 @@ namespace ElizerWork
     {
         private readonly Func<Task> _task;
 
-        public TaskWorkItem(DateTime executionTime, Func<Task> task)
-            : base(executionTime)
+        public TaskWorkItem(DateTime startTime, Func<Task> task)
+            : base(startTime)
         {
             _task = task ?? throw new ArgumentNullException(nameof(task));
         }
 
-        public override Task Execute(CancellationToken cancellationToken)
+        public override async Task Execute(CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            return _task();
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            await _task();
         }
     }
 }
