@@ -32,7 +32,7 @@
                 if (_workItems != null)
                     foreach (var itemToRun in _workItems.Where(e => e.NextRun <= now))
                     {
-                        var periodsFromLastRun = (DateTime.Now.Ticks - itemToRun.NextRun.Ticks) / itemToRun.Period.Ticks;
+                        var periodsFromLastRun = (now.Ticks - itemToRun.NextRun.Ticks) / itemToRun.Period.Ticks;
                         var nextRunTicks = itemToRun.NextRun.Ticks + (periodsFromLastRun + 1) * itemToRun.Period.Ticks;
                         itemToRun.NextRun = new DateTime(nextRunTicks);
                         _ = itemToRun.Work();
