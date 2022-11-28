@@ -2,39 +2,62 @@
 {
     public class Worker
     {
-        private readonly object _syncRoot = new();
-        private readonly TimeSpan _beatPeriod;
-        private readonly List<WorkItem> _workItems = new();
+        private readonly TimeSpan _beat;
+        private readonly Func<DateTime> _getNow;
+        private IReadOnlyCollection<WorkItem>? _workItems;
+        private bool _isRunning;
+        private Task? _run;
+        private CancellationTokenSource? _runCts;
 
-        public Worker(TimeSpan beatPeriod)
-        {
-            _beatPeriod = beatPeriod;
+        public Worker(TimeSpan beat, Func<DateTime> getNow)
+        { 
+            _beat = beat;
+            _getNow = getNow;
         }
 
-        public void Queue(WorkItem workItem)
+        public async Task Start(IReadOnlyCollection<WorkItem> workItems)
         {
-            lock (_syncRoot)
-                _workItems.Add(workItem);
+            await Stop();
+            _workItems = workItems ?? throw new ArgumentNullException(nameof(workItems));
+            _isRunning = true;
+            _runCts = new CancellationTokenSource();
+            _run = Run(_runCts.Token);
         }
 
-        public async Task Run(CancellationToken cancellationToken)
+        private async Task Run(CancellationToken cancellationToken)
         {
-            try
+            while (!cancellationToken.IsCancellationRequested) 
             {
-                while (true)
-                {
-                    var now = DateTime.Now;
-                    var activeWorkItems = _workItems.Where(e => e.StartTime <= now).ToArray();
-                    lock (_syncRoot)
-                        foreach (var item in activeWorkItems)
-                            _workItems.Remove(item);
-                    if (activeWorkItems.Any())
-                        await Task.WhenAll(activeWorkItems.Select(e => e.Execute(cancellationToken)));
-                    await Task.Delay(_beatPeriod, cancellationToken);
-                }
+                var now = _getNow();
+                if (_workItems != null)
+                    foreach (var itemToRun in _workItems.Where(e => e.NextRun <= now))
+                    {
+                        var periodsFromLastRun = (DateTime.Now.Ticks - itemToRun.NextRun.Ticks) / itemToRun.Period.Ticks;
+                        var nextRunTicks = itemToRun.NextRun.Ticks + (periodsFromLastRun + 1) * itemToRun.Period.Ticks;
+                        itemToRun.NextRun = new DateTime(nextRunTicks);
+                        _ = itemToRun.Work();
+                    }
+                await Task.Delay(_beat, cancellationToken);
             }
-            catch (OperationCanceledException)
+        }
+
+        public async Task Stop() 
+        {
+            if (_isRunning)
             {
+                _isRunning = false;
+                if (_workItems != null)
+                    foreach (var item in _workItems)
+                        item.CancellationSource?.Cancel();
+                _runCts?.Cancel();
+                try
+                {
+                    if (_run != null)
+                        await _run;
+                }
+                catch (OperationCanceledException)
+                {
+                }
             }
         }
     }
